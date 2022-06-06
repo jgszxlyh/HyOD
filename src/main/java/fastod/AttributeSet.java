@@ -1,5 +1,7 @@
 package fastod;
 
+import org.checkerframework.checker.units.qual.A;
+
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -159,4 +161,21 @@ public class AttributeSet implements Iterable<Integer>{
         return sb.toString();
     }
 
+    /**
+     * 得到set中有几个元素
+     */
+    public int getSize(){
+        int count = 0,ptr = 1;
+        for(int i=0;i<32;i++){
+            if((value&ptr)!=0)
+                count++;
+            ptr = ptr<<1;
+        }
+        return count;
+    }
+
+    public static void main(String[] args) {
+        AttributeSet test = new AttributeSet(0xffffffff);
+        System.out.println(test.getSize());
+    }
 }

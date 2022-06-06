@@ -1,5 +1,6 @@
 package fastod;
 
+import com.sun.xml.internal.bind.v2.TODO;
 import dependencyDiscover.Data.DataFrame;
 import dependencyDiscover.Dependency.LexicographicalOrderDependency;
 import dependencyDiscover.Predicate.Operator;
@@ -21,9 +22,10 @@ public class FasTOD {
 
     // M
     private List<CanonicalOD> result;
-    // L
+    // L 每层候选集
+    //List 表示每层，Set 表示候选的集合，集合中的元素是attributeSet
     private List<Set<AttributeSet>> contextInEachLevel;
-    // cc
+    // cc Key是context，Value是 []->right 中的right元素集合
     private HashMap<AttributeSet, AttributeSet> cc;
     // cs
     private HashMap<AttributeSet, Set<AttributePair>> cs;
@@ -188,38 +190,66 @@ public class FasTOD {
         return true;
     }
 
+    /**
+     * 在Cc+中放入一个值
+     * @param key 本层的某个context
+     * @param attributeSet 满足条件的Attribute集合
+     */
     private void ccPut(AttributeSet key, AttributeSet attributeSet) {
         if (!cc.containsKey(key))
             cc.put(key, new AttributeSet());
         cc.put(key, attributeSet);
     }
 
-    private void ccUnion(AttributeSet key, AttributeSet attributeSet) {
-        if (!cc.containsKey(key))
-            cc.put(key, new AttributeSet());
-        cc.put(key, cc.get(key).union(attributeSet));
-    }
-
+    /**
+     * 在Cc+中放入一个值
+     * @param key 本层中的context
+     * @param attribute int表示的单一元素
+     */
     private void ccPut(AttributeSet key, int attribute) {
         if (!cc.containsKey(key))
             cc.put(key, new AttributeSet());
         cc.put(key, cc.get(key).addAttribute(attribute));
     }
 
-    // 就是哈希表的取操作，没有就声明一个空value
+    /**
+     * 集合交操作
+     * @param key 本层的某个context
+     * @param attributeSet 满足条件的Attribute集合
+     */
+    private void ccUnion(AttributeSet key, AttributeSet attributeSet) {
+        if (!cc.containsKey(key))
+            cc.put(key, new AttributeSet());
+        cc.put(key, cc.get(key).union(attributeSet));
+    }
+
+    /**
+     * 读取Cc+
+     * @param key 某个context
+     * @return 返回该context下可能成为最小OD的集合
+     */
     private AttributeSet ccGet(AttributeSet key) {
         if (!cc.containsKey(key))
             cc.put(key, new AttributeSet());
         return cc.get(key);
     }
 
+    /**
+     * 构建Cs集合
+     * @param key 某个context
+     * @param value A~B形式
+     */
     private void csPut(AttributeSet key, AttributePair value) {
         if (!cs.containsKey(key))
             cs.put(key, new HashSet<>());
         cs.get(key).add(value);
     }
 
-    // 就是哈希表的取操作，没有就声明一个空value
+    /**
+     * 获得Cs集合
+     * @param key 某个context
+     * @return 获取该context下的可能成为最小的OD集合
+     */
     private Set<AttributePair> csGet(AttributeSet key) {
         if (!cs.containsKey(key))
             cs.put(key, new HashSet<>());
@@ -230,24 +260,33 @@ public class FasTOD {
         return complete;
     }
 
-    // 初始化工作
+    /**
+     * 初始化fastOD需要的数据结构
+     * 生成第0层和第1层的候选集
+     * 生成 Cc({}) = R
+     * @param data 数据集
+     */
     private void initialize(DataFrame data) {
         traversalGateway = new Gateway.ComplexTimeGateway();
         timer = new Timer();
         this.data = data;
         result = new ArrayList<>();
         // 两个集合，分别装FD和OCD
+        // TODO:多线程需要共享，使用线程安全的HashMap
         cc = new HashMap<>();
         cs = new HashMap<>();
 
+        //每一层记录一个
         contextInEachLevel = new ArrayList<>();
+
+        //建立第0层的hashset
         contextInEachLevel.add(new HashSet<>());
         AttributeSet emptySet = new AttributeSet();
-        // 对于这行代码我有疑问,我认为是这样的
+        // （对于这行代码我有疑问,我认为是这样的）
         // 相当于在level0中增加了一个空set
         contextInEachLevel.get(0).add(emptySet);
 
-        // 这里涉及到schema的初始化，schema就是R，所以几列就循环几次
+        // 这里涉及到schema的初始化，schema就是R，把所有列都加入Schema
         schema = new AttributeSet();
         for (int i = 0; i < data.getColumnCount(); i++) {
             schema = schema.addAttribute(i);
@@ -259,6 +298,7 @@ public class FasTOD {
         level = 1;
 
         HashSet<AttributeSet> level1Candidates = new HashSet<>();
+        //遍历每一列，每次加一个列
         for (int i = 0; i < data.getColumnCount(); i++) {
             AttributeSet singleAttribute = emptySet.addAttribute(i);
             level1Candidates.add(singleAttribute);
@@ -267,10 +307,13 @@ public class FasTOD {
         contextInEachLevel.add(level1Candidates);
     }
 
-    // 函数入口
+    /**
+     * SOD发现算法
+     * @param data 数据集
+     * @return 经典SOD列表
+     */
     public List<CanonicalOD> discover(DataFrame data) {
-
-        // initialize(data);
+        //从第0层开始，如果候选集大小不为0，则可以进行验证
         while (contextInEachLevel.get(level).size() != 0) {
             Util.out(String.format("第%d层开始", level));
             computeODs();
@@ -295,17 +338,20 @@ public class FasTOD {
         return result;
     }
 
+    /**
+     * 计算本层SOD，因为cc，cs，都是全局变量，所以没有参数
+     */
     private void computeODs() {
         // 得到当前level的attrSet集合
         Set<AttributeSet> contextThisLevel = contextInEachLevel.get(level);
-        // 每次一个元素set
+        // 每次取出一个context
         for (AttributeSet context : contextThisLevel) {
             if (timeUp()) {
                 complete = false;
                 return;
             }
             AttributeSet contextCC = schema;
-            // 遍历set中的attr
+            // 生成Cc
             for (int attribute : context) {
                 contextCC = contextCC.intersect(ccGet(context.deleteAttribute(attribute)));
             }
@@ -324,7 +370,7 @@ public class FasTOD {
             } else if (level > 2) {
                 Set<AttributePair> candidateCsPairSet = new HashSet<>();
                 for (int attribute : context) {
-                    // 排除掉其中一个X\{C}得到的attributePair
+                    // 取并，排除掉其中一个X\{C}得到的attributePair
                     candidateCsPairSet.addAll(csGet(context.deleteAttribute(attribute)));
                 }
                 for (AttributePair attributePair : candidateCsPairSet) {
@@ -333,6 +379,7 @@ public class FasTOD {
                             .deleteAttribute(attributePair.left.attribute)
                             .deleteAttribute(attributePair.right);
                     boolean addContext = true;
+                    //context/{A、B、D}
                     for (int attribute : contextDeleteAB) {
                         if (!csGet(context.deleteAttribute(attribute)).contains(attributePair)) {
                             addContext = false;
@@ -353,8 +400,9 @@ public class FasTOD {
             }
             AttributeSet contextIntersectCCContext = context.intersect(ccGet(context));
             for (int attribute : contextIntersectCCContext) {
+                //利用候选集构建OD
                 CanonicalOD od = new CanonicalOD(context.deleteAttribute(attribute), attribute);
-                // 验证OD
+                //验证OD
                 if (od.isValid(data, errorRateThreshold)) {
                     result.add(od);
                     fdcount++;
@@ -393,6 +441,9 @@ public class FasTOD {
         }
     }
 
+    /**
+     * 如果本层Cc和Cs均为空，则该节点可以被删除
+     */
     private void pruneLevels() {
         if (level >= 2) {
             List<AttributeSet> nodesToRemove = new ArrayList<>();
@@ -409,7 +460,11 @@ public class FasTOD {
         }
     }
 
+    /**
+     * 使用apriori算法生成下一层的Context
+     */
     private void calculateNextLevel() {
+        //本层context，拆分成前缀+一个元素
         Map<AttributeSet, List<Integer>> prefixBlocks = new HashMap<>();
         Set<AttributeSet> contextNextLevel = new HashSet<>();
         Set<AttributeSet> contextThisLevel = contextInEachLevel.get(level);
@@ -418,6 +473,7 @@ public class FasTOD {
         for (AttributeSet attributeSet : contextThisLevel) {
             for (Integer attribute : attributeSet) {
                 AttributeSet prefix = attributeSet.deleteAttribute(attribute);
+                //把前缀相同的后缀放在一起
                 if (!prefixBlocks.containsKey(prefix)) {
                     prefixBlocks.put(prefix, new ArrayList<>());
                 }
@@ -459,13 +515,13 @@ public class FasTOD {
     }
 
     public static void main(String[] args) {
-        // DataFrame data = DataFrame.fromCsv("./data/exp1/ATOM/Atom 10.csv");
-        DataFrame data = DataFrame.fromCsv("./data/test2.csv");
+        DataFrame data = DataFrame.fromCsv("./data/exp1/ATOM/Atom 11.csv");
+//        DataFrame data = DataFrame.fromCsv("./data/test2.csv");
         FasTOD f = new FasTOD(1000000, -1f);
         f.initialize(data);
         List<CanonicalOD> result = f.discover(data);
         System.out.println(result);
-        System.out.println(f.setOD2ListOD(result));
+//        System.out.println(f.setOD2ListOD(result));
         System.exit(0);
     }
 }

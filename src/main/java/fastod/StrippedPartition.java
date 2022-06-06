@@ -87,6 +87,12 @@ public class StrippedPartition {
         return this;
     }
 
+    /**
+     * 检查一个sp是否有split
+     * [] -> A
+     * @param right attribute的值
+     * @return
+     */
     public boolean split(int right){
         Timer timer=new Timer();
         for(int beginPointer=0;beginPointer<begins.size()-1;beginPointer++) {
@@ -107,6 +113,13 @@ public class StrippedPartition {
         return false;
     }
 
+    /**
+     * 检查swap
+     * A~B
+     * @param left 左侧元素
+     * @param right 右侧元素
+     * @return
+     */
     public boolean swap(SingleAttributePredicate left, int right){
         Timer timer=new Timer();
         for(int beginPointer=0;beginPointer<begins.size()-1;beginPointer++) {

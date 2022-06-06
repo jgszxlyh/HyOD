@@ -70,12 +70,18 @@ public class CanonicalOD implements Comparable<CanonicalOD>{
         return sb.toString();
     }
 
+    /**
+     * 验证OD是否成立
+     * @param data 数据集
+     * @param errorRateThreshold 错误率，用来实现近似OD
+     * @return 是否成立
+     */
     public boolean isValid(DataFrame data, double errorRateThreshold){
         //先得到分组，这个函数有个好处，即可以利用之前的结果去生成新的结果
         StrippedPartition sp= StrippedPartition.getStrippedPartition(context,data);
-        System.out.println(this);
-        System.out.println("isValid left: "+left);
-        System.out.println(sp);
+//        System.out.println(this);
+//        System.out.println("isValid left: "+left);
+//        System.out.println(sp);
         //-1f指关闭错误率阈值，要完全保证无swap和split
         if (errorRateThreshold==-1f){
             //左边为空，说明是第一种od，即使用FD检验
