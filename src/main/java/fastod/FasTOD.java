@@ -1,6 +1,6 @@
 package fastod;
 
-import com.sun.xml.internal.bind.v2.TODO;
+//import com.sun.xml.internal.bind.v2.TODO;
 import dependencyDiscover.Data.DataFrame;
 import dependencyDiscover.Dependency.LexicographicalOrderDependency;
 import dependencyDiscover.Predicate.Operator;
@@ -515,7 +515,7 @@ public class FasTOD {
     }
 
     public static void main(String[] args) {
-        DataFrame data = DataFrame.fromCsv("./data/exp1/ATOM/Atom 11.csv");
+        DataFrame data = DataFrame.fromCsv("Data/Salaries-int.csv");
 //        DataFrame data = DataFrame.fromCsv("./data/test2.csv");
         FasTOD f = new FasTOD(1000000, -1f);
         f.initialize(data);

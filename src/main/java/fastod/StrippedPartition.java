@@ -113,6 +113,29 @@ public class StrippedPartition {
         return false;
     }
 
+
+    public Set<Integer> splitForViorows(int right){
+        Timer timer=new Timer();
+        Set<Integer> viorows = new HashSet<>();
+        for(int beginPointer=0;beginPointer<begins.size()-1;beginPointer++) {
+            int groupBegin = begins.get(beginPointer);
+            int groupEnd = begins.get(beginPointer + 1);
+            //拿到这个值，整个partition对应的tuple的值都应该相等，否则说明有split
+            int groupValue=data.get(indexes.get(groupBegin),right);
+            for(int i=groupBegin+1;i<groupEnd;i++) {
+                int index = indexes.get(i);
+                int value = data.get(index, right);
+                if(value!=groupValue) {
+                    validateTime+=timer.getTimeUsed();
+                    viorows.add(index);
+                }
+            }
+        }
+
+        validateTime+=timer.getTimeUsed();
+        return viorows;
+    }
+
     /**
      * 检查swap
      * A~B
@@ -158,6 +181,47 @@ public class StrippedPartition {
         return false;
     }
 
+
+    public Set<Integer> swapForViorows(SingleAttributePredicate left, int right){
+        Timer timer=new Timer();
+        Set<Integer> viorows = new HashSet<>();
+        for(int beginPointer=0;beginPointer<begins.size()-1;beginPointer++) {
+            int groupBegin = begins.get(beginPointer);
+            int groupEnd = begins.get(beginPointer + 1);
+
+            //value相当于存了一个二元组，虽然叫index and value 但是两个都是value
+            List<fastod.DataAndIndex> values=new ArrayList<>();
+            for(int i=groupBegin;i<groupEnd;i++) {
+                int index = indexes.get(i);
+                values.add(new fastod.DataAndIndex(filteredDataFrameGet(data,index,left),data.get(index,right)));
+            }
+            //按照大小来排
+            Collections.sort(values);
+            int beforeMax=Integer.MIN_VALUE;
+            int groupMax=Integer.MIN_VALUE;
+            for (int i = 0; i < values.size(); i++) {
+                int index=values.get(i).index;
+                if(i==0 || values.get(i-1).data != values.get(i).data){
+                    beforeMax=Math.max(groupMax,beforeMax);
+                    groupMax=index;
+                }else {
+                    groupMax=Math.max(groupMax,index);
+                }
+                if(index<beforeMax) {
+                    validateTime+=timer.getTimeUsed();
+                    viorows.add(index);
+                }
+                //这块改了学长的代码，目前没出错
+//                if(i!=0 && values.get(i-1).index > values.get(i).index){
+//                    return true;
+//                }
+            }
+        }
+        validateTime+=timer.getTimeUsed();
+
+        return viorows;
+    }
+
     @Override
     public String toString() {
         return "StrippedPartition{" +
@@ -175,6 +239,7 @@ public class StrippedPartition {
         cloneTime+=timer.getTimeUsed();
         return result;
     }
+
 
     public static StrippedPartition getStrippedPartition(fastod.AttributeSet attributeSet, DataFrame data){
         //用作缓存的，
@@ -345,6 +410,10 @@ public class StrippedPartition {
             result=-result;
         }
         return result;
+    }
+
+    public void clearCache(){
+        cache.clear();
     }
 
     public static int lengthOfLIS(List<Integer> nums) {

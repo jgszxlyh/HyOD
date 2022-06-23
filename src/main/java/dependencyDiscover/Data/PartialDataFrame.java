@@ -45,6 +45,10 @@ public class PartialDataFrame extends DataFrame {
         return indexInOriginalDataFrame.get(row);
     }
 
+    public int getRowsCount(){
+        return super.getRowCount();
+    }
+
     @Override
     public void deleteRow(int row) {
         throw new RuntimeException("method not supported");

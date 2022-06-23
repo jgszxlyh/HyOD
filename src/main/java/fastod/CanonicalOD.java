@@ -4,7 +4,7 @@ import dependencyDiscover.Data.DataFrame;
 import dependencyDiscover.Predicate.Operator;
 import dependencyDiscover.Predicate.SingleAttributePredicate;
 
-import java.util.Objects;
+import java.util.*;
 
 public class CanonicalOD implements Comparable<CanonicalOD>{
 
@@ -109,6 +109,36 @@ public class CanonicalOD implements Comparable<CanonicalOD>{
             double errorRate = (double) vioCount /data.getTupleCount();
             return errorRate<errorRateThreshold;
         }
+    }
+
+
+    public static void clearForResult(DataFrame data){
+        StrippedPartition sp = new StrippedPartition(data);
+        sp.clearCache();
+
+    }
+
+    public Set<Integer> validForViorows(DataFrame data, double errorRateThreshold){
+        //先得到分组，这个函数有个好处，即可以利用之前的结果去生成新的结果
+        StrippedPartition sp= StrippedPartition.getStrippedPartition(context,data);
+
+//        System.out.println(this);
+//        System.out.println("isValid left: "+left);
+//        System.out.println(sp);
+        //-1f指关闭错误率阈值，要完全保证无swap和split
+        if (errorRateThreshold==-1f){
+            //左边为空，说明是第一种od，即使用FD检验
+            if(left==null){
+                splitCheckCount++;
+                return sp.splitForViorows(right);
+            }
+            //左侧要是有元素，一定是OCD，判断swap
+            else {
+                swapCheckCount++;
+                return sp.swapForViorows(left,right);
+            }
+        }
+        return new HashSet<>();
     }
 
     @Override

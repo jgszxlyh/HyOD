@@ -38,6 +38,18 @@ public class DataFrame {
         this.columnNames = columnNames;
     }
 
+    public int getRowCount(){
+        return data.size();
+    }
+
+    public List<List<Integer>> getData(){
+        return this.data;
+    }
+
+    public List<Integer> getRow(int row){
+        return data.get(row);
+    }
+
     public static DataFrame fromCsv(String filePath){
         try {
             String[] lines=Util.fromFile(filePath).split("\n");
