@@ -13,7 +13,7 @@ Given an instance of a relational schema, HyOD efficiently computes the set of a
 
 ### A Quick Example
 After building the project with maven, it is already runnable with a simple example.
-This example running HyOD takes as input the dataset [WP-20K-7.csv](https://github.com/RangerShaw/FastADC/blob/master/dataset/airport.csv)
+This example running HyOD takes as input the dataset [WP-20K-7.csv](https://github.com/jgszxlyh/HyOD/blob/HyOD/Data/exp1/WP-20K-7.csv)
 with initial sample size 100,selected tuple pairs 10, computes its ODs,
 and outputs relevant information including the number of ODs,memory cost,sample size after compute,running time and so on.
 
@@ -21,13 +21,13 @@ You Can use  ```HyOD.jar``` like: ```java -jar HyOD.jar WP-20K-7.csv 100 10```
 
 ### Configures
 
-Most parameters and configures related to our experiment are in [HyOD.java](https://github.com/RangerShaw/FastADC/blob/master/src/main/java/Main.java).
+Most parameters and configures related to our experiment are in [HyOD.java](https://github.com/jgszxlyh/HyOD/blob/HyOD/src/main/java/HyOD/HyOD.java).
 Some of the most pertinent ones are listed here, and please refer to the code and comments for further detail.
 
 * ```fp```: file path of input dataset
 * ```samplesize```: initial sample size, within \[0,\|r\|\]
 * ```tuple num```: the number of tuples added to sample by valided OD, at least 1
-* ```thread num```: the number of thread in threadpool,only [HyODM.java](https://github.com/RangerShaw/FastADC/blob/master/src/main/java/Main.java) use it
+* ```thread num```: the number of thread in threadpool,only [HyODM.java](https://github.com/jgszxlyh/HyOD/blob/HyOD/src/main/java/HyOD/HyODM.java) use it
 
 ## Comparative Experiments
 
