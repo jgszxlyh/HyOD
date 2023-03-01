@@ -40,6 +40,9 @@ public class PartialDataFrame extends DataFrame {
         }
     }
 
+    public List<Integer> getIndexInOriginalDataFrame(){
+        return this.indexInOriginalDataFrame;
+    }
 
     public int getIndexInOriginalDataFrame(int row){
         return indexInOriginalDataFrame.get(row);
