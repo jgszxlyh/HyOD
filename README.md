@@ -1,7 +1,7 @@
 # HyOD
 ## Introduction
 
-HyOD is a solution for Set-based Order Dependency (OD) discovery.
+HyOD is a solution to Set-based Order Dependency (OD) discovery.
 Given an instance of a relational schema, HyOD efficiently computes the set of all minimal valid set-based ODs.
 
 ## Requirements
